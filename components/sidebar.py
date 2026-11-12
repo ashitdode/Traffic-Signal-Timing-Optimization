@@ -88,10 +88,11 @@ def render_sidebar():
         )
         
         scenario_options = list(config.TRAFFIC_SCENARIOS.keys())
+        default_idx = scenario_options.index("Balanced Traffic") if "Balanced Traffic" in scenario_options else 0
         active_scenario = st.selectbox(
             "Select Scenario",
             options=scenario_options,
-            index=0,
+            index=default_idx,
             label_visibility="collapsed",
             key="sidebar_scenario_select",
         )
@@ -106,6 +107,76 @@ def render_sidebar():
             """,
             unsafe_allow_html=True,
         )
+
+        if active_scenario == "Manual Traffic Input":
+            st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+            st.markdown(
+                """
+                <div style="background: rgba(198, 167, 106, 0.08); border: 1px solid rgba(198, 167, 106, 0.35); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #C6A76A; text-transform: uppercase; letter-spacing: 0.05em;">MANUAL VEHICLE COUNTS (0 - 200)</span>
+                    <p style="font-size: 0.72rem; color: #A4ADB3; margin: 3px 0 0 0;">Enter vehicle queue counts per approach corridor.</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                in_nb = st.number_input(
+                    "North (NB)",
+                    min_value=0,
+                    max_value=200,
+                    value=int(st.session_state.get("manual_nb", 35)),
+                    step=1,
+                    key="sidebar_manual_nb",
+                    help="Northbound vehicle count (0 to 200)",
+                )
+                in_eb = st.number_input(
+                    "East (EB)",
+                    min_value=0,
+                    max_value=200,
+                    value=int(st.session_state.get("manual_eb", 25)),
+                    step=1,
+                    key="sidebar_manual_eb",
+                    help="Eastbound vehicle count (0 to 200)",
+                )
+            with col_m2:
+                in_sb = st.number_input(
+                    "South (SB)",
+                    min_value=0,
+                    max_value=200,
+                    value=int(st.session_state.get("manual_sb", 30)),
+                    step=1,
+                    key="sidebar_manual_sb",
+                    help="Southbound vehicle count (0 to 200)",
+                )
+                in_wb = st.number_input(
+                    "West (WB)",
+                    min_value=0,
+                    max_value=200,
+                    value=int(st.session_state.get("manual_wb", 20)),
+                    step=1,
+                    key="sidebar_manual_wb",
+                    help="Westbound vehicle count (0 to 200)",
+                )
+
+            # Strict validation: prevent negative values, clamp between 0 and 200
+            val_nb = max(0, min(200, int(in_nb)))
+            val_sb = max(0, min(200, int(in_sb)))
+            val_eb = max(0, min(200, int(in_eb)))
+            val_wb = max(0, min(200, int(in_wb)))
+
+            if st.button("Apply Traffic Input", type="primary", use_container_width=True, key="btn_apply_sidebar_manual"):
+                st.session_state["manual_nb"] = val_nb
+                st.session_state["manual_sb"] = val_sb
+                st.session_state["manual_eb"] = val_eb
+                st.session_state["manual_wb"] = val_wb
+                st.session_state["manual_counts_pending"] = {
+                    "NB": val_nb,
+                    "SB": val_sb,
+                    "EB": val_eb,
+                    "WB": val_wb,
+                }
+                st.rerun()
 
         st.markdown("<hr style='border: none; border-top: 1px solid #30404A; margin: 1.25rem 0;'>", unsafe_allow_html=True)
         

@@ -149,3 +149,46 @@ def get_or_create_default_dataset() -> pd.DataFrame:
             
     df = generate_traffic_dataset(days=5, interval_minutes=15, output_path=default_csv)
     return df
+
+
+def append_manual_input_to_dataset(df: pd.DataFrame, counts: dict) -> pd.DataFrame:
+    """Appends manual input records to historical dataset so analytics reflect user counts."""
+    now = datetime.now()
+    hour = now.hour + now.minute / 60.0
+    new_rows = []
+    for app_key, app_name in zip(config.APPROACH_KEYS, config.APPROACHES):
+        q = counts.get(app_key, 0)
+        vph = max(40, q * 24 + 100)
+        fixed_delay = max(8.0, 15.0 + q * 0.8)
+        ai_delay = max(5.0, fixed_delay * 0.72)
+        fixed_queue = max(1, int(q * 1.3))
+        ai_queue = q
+        fixed_fuel = round((fixed_delay / 3600.0) * config.IDLE_FUEL_RATE_LPH * (vph * 0.25), 3)
+        ai_fuel = round((ai_delay / 3600.0) * config.IDLE_FUEL_RATE_LPH * (vph * 0.25), 3)
+        fixed_co2 = round(fixed_fuel * config.CO2_PER_LITER_GASOLINE_KG, 2)
+        ai_co2 = round(ai_fuel * config.CO2_PER_LITER_GASOLINE_KG, 2)
+        new_rows.append({
+            "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "date": now.strftime("%Y-%m-%d"),
+            "hour": round(hour, 2),
+            "approach_key": app_key,
+            "approach_name": app_name,
+            "weather": "Clear",
+            "vehicle_flow_vph": vph,
+            "v_c_ratio": round(min(1.2, vph / 800.0), 2),
+            "fixed_delay_sec": round(fixed_delay, 1),
+            "fixed_queue_veh": fixed_queue,
+            "fixed_los": compute_hcm_los(fixed_delay),
+            "fixed_fuel_liters": fixed_fuel,
+            "fixed_co2_kg": fixed_co2,
+            "ai_delay_sec": round(ai_delay, 1),
+            "ai_queue_veh": ai_queue,
+            "ai_los": compute_hcm_los(ai_delay),
+            "ai_fuel_liters": ai_fuel,
+            "ai_co2_kg": ai_co2,
+            "delay_saved_sec": round(fixed_delay - ai_delay, 1),
+            "fuel_saved_liters": round(fixed_fuel - ai_fuel, 3),
+            "co2_saved_kg": round(fixed_co2 - ai_co2, 2),
+        })
+    return pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
+

@@ -158,6 +158,38 @@ class TestTrafficSignalOptimization(unittest.TestCase):
         self.assertIn("timestamp", csv_str)
         self.assertIn("vehicle_flow_vph", csv_str)
 
+    def test_09_manual_traffic_input_bounds_and_optimization(self):
+        """Validates manual traffic input bounding (0-200), negative value prevention, and dynamic plan re-optimization."""
+        # 1. Negative count prevention and clamping within [0, 200]
+        test_counts = {"NB": -15, "SB": 85, "EB": 250, "WB": 0}
+        applied = self.simulator.apply_manual_traffic_counts(test_counts)
+        self.assertEqual(applied["NB"], 0)    # Clamped from -15 to 0
+        self.assertEqual(applied["SB"], 85)   # Exact valid count
+        self.assertEqual(applied["EB"], 200)  # Clamped from 250 to 200
+        self.assertEqual(applied["WB"], 0)    # Zero boundary preserved
+        
+        # Verify queues in simulator
+        self.assertEqual(self.simulator.queues["NB"], 0)
+        self.assertEqual(self.simulator.queues["SB"], 85)
+        self.assertEqual(self.simulator.queues["EB"], 200)
+        self.assertEqual(self.simulator.queues["WB"], 0)
+
+        # 2. Check that signal timing plan updated dynamically
+        metrics = self.simulator.get_summary_metrics()
+        self.assertEqual(metrics["total_current_queue"], 285)
+        self.assertGreater(metrics["avg_delay_sec"], 0)
+        
+        # Phase EW has heavy queue (200 veh) vs NS (85 veh), so EW must receive significant green allocation
+        plan = metrics["active_plan"]
+        self.assertGreaterEqual(plan["phase_greens"]["Phase_EW"], plan["phase_greens"]["Phase_NS"])
+
+        # 3. Test dataset appending for analytics
+        from modules.data_generator import append_manual_input_to_dataset
+        dummy_df = generate_traffic_dataset(days=1, interval_minutes=60, seed=789)
+        initial_len = len(dummy_df)
+        updated_df = append_manual_input_to_dataset(dummy_df, applied)
+        self.assertEqual(len(updated_df), initial_len + 4)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

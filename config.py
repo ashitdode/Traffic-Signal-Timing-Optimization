@@ -88,6 +88,12 @@ VALUE_OF_TIME_HOURLY_USD = 21.50  # USDOT commuter value standard
 # Values define average arrival rates (vehicles/hour) per approach
 # ==============================================================================
 TRAFFIC_SCENARIOS: Dict[str, Dict[str, Any]] = {
+    "Manual Traffic Input": {
+        "description": "User-defined vehicle counts (0-200) entered dynamically per approach corridor.",
+        "arrivals": {"NB": 500, "SB": 480, "EB": 420, "WB": 400},
+        "saturation_flow": 1800,
+        "incident": False,
+    },
     "Balanced Traffic": {
         "description": "Equally distributed traffic flow across all four intersection corridors.",
         "arrivals": {"NB": 450, "SB": 430, "EB": 440, "WB": 420},

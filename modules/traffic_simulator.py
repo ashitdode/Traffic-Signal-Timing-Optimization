@@ -31,9 +31,15 @@ class TrafficSimulator:
         self.optimizer = SignalOptimizer()
         self.engine = TrafficEngine()
         self.scenario_name = scenario_name
-        self.scenario_info = config.TRAFFIC_SCENARIOS.get(
+        base = config.TRAFFIC_SCENARIOS.get(
             scenario_name, config.TRAFFIC_SCENARIOS["Balanced Traffic"]
         )
+        self.scenario_info = {
+            "description": base["description"],
+            "arrivals": dict(base["arrivals"]),
+            "saturation_flow": base["saturation_flow"],
+            "incident": base.get("incident", False),
+        }
         self.is_running: bool = False
         self.reset()
 
@@ -80,8 +86,38 @@ class TrafficSimulator:
         """Updates active scenario and re-optimizes signal plan."""
         if scenario_name in config.TRAFFIC_SCENARIOS:
             self.scenario_name = scenario_name
-            self.scenario_info = config.TRAFFIC_SCENARIOS[scenario_name]
+            base = config.TRAFFIC_SCENARIOS[scenario_name]
+            self.scenario_info = {
+                "description": base["description"],
+                "arrivals": dict(base["arrivals"]),
+                "saturation_flow": base["saturation_flow"],
+                "incident": base.get("incident", False),
+            }
+            if scenario_name == "Manual Traffic Input" and hasattr(self, "manual_counts"):
+                for app in config.APPROACH_KEYS:
+                    self.queues[app] = self.manual_counts[app]
             self.update_signal_plan()
+
+    def apply_manual_traffic_counts(self, counts: Dict[str, int]) -> Dict[str, int]:
+        """
+        Applies user-defined manual vehicle counts to intersection approaches.
+        Validates 0-200 bounds, prevents negative values, updates queues,
+        scales arrival demand, and triggers signal plan re-optimization.
+        """
+        validated_counts = {}
+        for app in config.APPROACH_KEYS:
+            raw_val = counts.get(app, self.queues.get(app, 0))
+            # Strict validation: prevent negative values, clamp between 0 and 200
+            val = int(np.clip(max(0, int(raw_val)), 0, 200))
+            validated_counts[app] = val
+            self.queues[app] = val
+            simulated_arrival = int(max(80, min(1500, val * 24 + 100)))
+            self.scenario_info["arrivals"][app] = simulated_arrival
+
+        self.manual_counts = validated_counts
+        self.update_signal_plan()
+        self._record_telemetry()
+        return validated_counts
 
     def set_control_mode(self, mode: str):
         """Switches active signal control paradigm."""
@@ -206,7 +242,11 @@ class TrafficSimulator:
         curr_phase = self.PHASES[self.current_phase_index]
         tot_dep = sum(self.total_departures.values())
         tot_delay = sum(self.accumulated_delay_veh_sec.values())
-        avg_delay = (tot_delay / max(1, tot_dep)) if tot_dep > 0 else 8.5
+        tot_queue = sum(self.queues.values())
+        if tot_dep > 0:
+            avg_delay = tot_delay / tot_dep
+        else:
+            avg_delay = max(8.5, min(85.0, 8.0 + tot_queue * 0.45))
         
         self.history.append({
             "time_sec": self.time_seconds,
@@ -217,7 +257,7 @@ class TrafficSimulator:
             "queue_SB": self.queues["SB"],
             "queue_EB": self.queues["EB"],
             "queue_WB": self.queues["WB"],
-            "total_queue": sum(self.queues.values()),
+            "total_queue": tot_queue,
             "total_departures": tot_dep,
             "avg_delay_sec": round(avg_delay, 1),
             "control_mode": self.control_mode,
@@ -229,13 +269,18 @@ class TrafficSimulator:
         """Calculates instantaneous summary performance metrics."""
         tot_dep = sum(self.total_departures.values())
         tot_delay = sum(self.accumulated_delay_veh_sec.values())
-        avg_delay = (tot_delay / max(1, tot_dep)) if tot_dep > 0 else 9.2
+        tot_queue = sum(self.queues.values())
+        if tot_dep > 0:
+            avg_delay = tot_delay / tot_dep
+        else:
+            avg_delay = max(8.5, min(85.0, 8.0 + tot_queue * 0.45))
+            
         grade, label, color = self.engine.get_hcm_los_grade(avg_delay)
         
         fixed_benchmark_delay = avg_delay * 1.34
         delay_reduction_pct = max(0.0, round(((fixed_benchmark_delay - avg_delay) / fixed_benchmark_delay) * 100, 1))
         
-        env = self.engine.estimate_environmental_impact(avg_delay, max(1, tot_dep))
+        env = self.engine.estimate_environmental_impact(avg_delay, max(1, tot_dep if tot_dep > 0 else tot_queue))
         
         curr_phase = self.PHASES[self.current_phase_index]
         target_dur = self.get_phase_duration(curr_phase["name"])

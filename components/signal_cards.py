@@ -68,8 +68,9 @@ def render_approach_cards(
         else:
             light_badge = '<span style="background: rgba(224,93,93,0.15); color: #E05D5D; border: 1px solid rgba(224,93,93,0.3); padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;">RED</span>'
 
-        meter_pct = min(100, int((q_count / 25.0) * 100))
-        meter_color = "#4EBA86" if q_count < 8 else ("#E5A93C" if q_count < 16 else "#E05D5D")
+        max_q_scale = max(30.0, float(max(queues.values(), default=30)))
+        meter_pct = min(100, int((q_count / max_q_scale) * 100))
+        meter_color = "#4EBA86" if meter_pct < 35 else ("#E5A93C" if meter_pct < 70 else "#E05D5D")
 
         with cols[idx]:
             card_html = textwrap.dedent(f"""

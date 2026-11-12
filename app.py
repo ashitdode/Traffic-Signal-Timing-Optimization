@@ -67,6 +67,24 @@ if sim.scenario_name != active_scenario:
 if sim.control_mode != selected_controller:
     sim.set_control_mode(selected_controller)
 
+# Apply pending manual traffic inputs if user submitted
+if "manual_counts_pending" in st.session_state and st.session_state["manual_counts_pending"] is not None:
+    pending_counts = st.session_state.pop("manual_counts_pending")
+    sim.apply_manual_traffic_counts(pending_counts)
+    if "historical_data" in st.session_state:
+        from modules.data_generator import append_manual_input_to_dataset
+        st.session_state.historical_data = append_manual_input_to_dataset(
+            st.session_state.historical_data, pending_counts
+        )
+elif active_scenario == "Manual Traffic Input" and not hasattr(sim, "manual_counts"):
+    initial_manual = {
+        "NB": st.session_state.get("manual_nb", 35),
+        "SB": st.session_state.get("manual_sb", 30),
+        "EB": st.session_state.get("manual_eb", 25),
+        "WB": st.session_state.get("manual_wb", 20),
+    }
+    sim.apply_manual_traffic_counts(initial_manual)
+
 metrics = sim.get_summary_metrics()
 queues = sim.queues
 arrivals = sim.scenario_info["arrivals"]
@@ -159,6 +177,35 @@ elif "2. Live Traffic Simulation" in selected_module:
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
     
+    if active_scenario == "Manual Traffic Input":
+        with st.expander("📝 Manual Traffic Input Panel (0 - 200 Vehicles)", expanded=True):
+            st.markdown(
+                "<p style='font-size: 0.8rem; color: #C6A76A; font-weight: 600; margin-bottom: 0.4rem;'>Enter custom vehicle counts for each approach corridor:</p>",
+                unsafe_allow_html=True,
+            )
+            col_in1, col_in2, col_in3, col_in4, col_btn = st.columns([1, 1, 1, 1, 1.4])
+            with col_in1:
+                p_nb = st.number_input("North (NB)", min_value=0, max_value=200, value=int(st.session_state.get("manual_nb", 35)), step=1, key="live_manual_nb")
+            with col_in2:
+                p_sb = st.number_input("South (SB)", min_value=0, max_value=200, value=int(st.session_state.get("manual_sb", 30)), step=1, key="live_manual_sb")
+            with col_in3:
+                p_eb = st.number_input("East (EB)", min_value=0, max_value=200, value=int(st.session_state.get("manual_eb", 25)), step=1, key="live_manual_eb")
+            with col_in4:
+                p_wb = st.number_input("West (WB)", min_value=0, max_value=200, value=int(st.session_state.get("manual_wb", 20)), step=1, key="live_manual_wb")
+            with col_btn:
+                st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+                if st.button("Apply Traffic Input", type="primary", use_container_width=True, key="btn_apply_live_manual"):
+                    v_nb = max(0, min(200, int(p_nb)))
+                    v_sb = max(0, min(200, int(p_sb)))
+                    v_eb = max(0, min(200, int(p_eb)))
+                    v_wb = max(0, min(200, int(p_wb)))
+                    st.session_state["manual_nb"] = v_nb
+                    st.session_state["manual_sb"] = v_sb
+                    st.session_state["manual_eb"] = v_eb
+                    st.session_state["manual_wb"] = v_wb
+                    st.session_state["manual_counts_pending"] = {"NB": v_nb, "SB": v_sb, "EB": v_eb, "WB": v_wb}
+                    st.rerun()
+
     col_sim_left, col_sim_right = st.columns([1.6, 1.0])
     with col_sim_left:
         render_intersection_view(metrics, queues, plan.get("cycle_length", 90.0))
