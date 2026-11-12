@@ -6,6 +6,7 @@ under strictly identical traffic arrival patterns, starting conditions, and dura
 
 from typing import Dict, Any
 import io
+import textwrap
 import pandas as pd
 import streamlit as st
 
@@ -24,21 +25,19 @@ def render_comparison_view():
     Renders the complete Stage 6 Performance Comparison Interface.
     """
     # Header Section
-    st.markdown(
-        """
-        <div style="margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
-                <span class="status-pill" style="border-color: #C6A76A; color: #C6A76A; font-weight: 600;">STAGE 6 EVALUATION</span>
-                <span style="font-size: 0.78rem; color: #A4ADB3;">• Controlled Head-to-Head Testing</span>
-            </div>
-            <h1 class="serif-header" style="font-size: 2.2rem; margin: 0 0 0.4rem 0;">PERFORMANCE COMPARISON</h1>
-            <p style="font-size: 0.95rem; color: #A4ADB3; margin: 0; line-height: 1.5;">
-                Evaluating adaptive signal intelligence against conventional traffic management.
-            </p>
+    header_html = textwrap.dedent("""
+    <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
+            <span class="status-pill" style="border-color: #C6A76A; color: #C6A76A; font-weight: 600;">STAGE 6 EVALUATION</span>
+            <span style="font-size: 0.78rem; color: #A4ADB3;">• Controlled Head-to-Head Testing</span>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        <h1 class="serif-header" style="font-size: 2.2rem; margin: 0 0 0.4rem 0;">PERFORMANCE COMPARISON</h1>
+        <p style="font-size: 0.95rem; color: #A4ADB3; margin: 0; line-height: 1.5;">
+            Evaluating adaptive signal intelligence against conventional traffic management.
+        </p>
+    </div>
+    """).strip()
+    st.markdown(header_html, unsafe_allow_html=True)
 
     # Comparison Engine Initialization in Session State
     if "comparison_engine" not in st.session_state:
@@ -132,69 +131,63 @@ def render_comparison_view():
     col_card_trad, col_card_ai = st.columns(2)
 
     with col_card_trad:
-        st.markdown(
-            f"""
-            <div style="background: #1B2933; border: 1px solid #30404A; border-top: 3px solid #E05D5D; border-radius: 14px; padding: 1.4rem; box-shadow: 0 4px 15px rgba(0,0,0,0.25); height: 100%;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                    <span style="font-size: 0.76rem; text-transform: uppercase; color: #A4ADB3; letter-spacing: 0.08em; font-weight: 600;">CONTROL BASELINE</span>
-                    <span class="status-pill" style="border-color: rgba(224,93,93,0.3); color: #E05D5D;">Conventional</span>
-                </div>
-                <h3 style="font-size: 1.25rem; font-weight: 700; color: #F1F0EB; margin: 0 0 0.5rem 0;">TRADITIONAL SYSTEM</h3>
-                <p style="font-size: 0.85rem; color: #C6A76A; font-weight: 500; margin-bottom: 0.85rem;">
-                    Fixed-time signal control
-                </p>
-                <ul style="font-size: 0.82rem; color: #A4ADB3; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
-                    <li><strong>Fixed green-light duration:</strong> Rigid {fixed_cycle}s cycle with constant phase green.</li>
-                    <li><strong>Predetermined signal sequence:</strong> Operates on fixed timetable clock.</li>
-                    <li><strong>Static timing:</strong> Blind to actual arrival volume variations or queue spikes.</li>
-                    <li><strong>Standard yellow transition:</strong> Standard {config.DEFAULT_YELLOW_TIME}s amber clearance.</li>
-                    <li><strong>No prioritization:</strong> Congested corridors receive no adaptive extra green.</li>
-                </ul>
+        card_trad_html = textwrap.dedent(f"""
+        <div style="background: #1B2933; border: 1px solid #30404A; border-top: 3px solid #E05D5D; border-radius: 14px; padding: 1.4rem; box-shadow: 0 4px 15px rgba(0,0,0,0.25); height: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                <span style="font-size: 0.76rem; text-transform: uppercase; color: #A4ADB3; letter-spacing: 0.08em; font-weight: 600;">CONTROL BASELINE</span>
+                <span class="status-pill" style="border-color: rgba(224,93,93,0.3); color: #E05D5D;">Conventional</span>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #F1F0EB; margin: 0 0 0.5rem 0;">TRADITIONAL SYSTEM</h3>
+            <p style="font-size: 0.85rem; color: #C6A76A; font-weight: 500; margin-bottom: 0.85rem;">
+                Fixed-time signal control
+            </p>
+            <ul style="font-size: 0.82rem; color: #A4ADB3; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
+                <li><strong>Fixed green-light duration:</strong> Rigid {fixed_cycle}s cycle with constant phase green.</li>
+                <li><strong>Predetermined signal sequence:</strong> Operates on fixed timetable clock.</li>
+                <li><strong>Static timing:</strong> Blind to actual arrival volume variations or queue spikes.</li>
+                <li><strong>Standard yellow transition:</strong> Standard {config.DEFAULT_YELLOW_TIME}s amber clearance.</li>
+                <li><strong>No prioritization:</strong> Congested corridors receive no adaptive extra green.</li>
+            </ul>
+        </div>
+        """).strip()
+        st.markdown(card_trad_html, unsafe_allow_html=True)
 
     with col_card_ai:
-        st.markdown(
-            """
-            <div style="background: #1B2933; border: 1px solid #30404A; border-top: 3px solid #8BAE9B; border-radius: 14px; padding: 1.4rem; box-shadow: 0 4px 15px rgba(0,0,0,0.25); height: 100%;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                    <span style="font-size: 0.76rem; text-transform: uppercase; color: #8BAE9B; letter-spacing: 0.08em; font-weight: 600;">OPTIMIZED SYSTEM</span>
-                    <span class="status-pill" style="border-color: rgba(139,174,155,0.3); color: #8BAE9B;">Intelligent</span>
-                </div>
-                <h3 style="font-size: 1.25rem; font-weight: 700; color: #F1F0EB; margin: 0 0 0.5rem 0;">AI-OPTIMIZED SYSTEM</h3>
-                <p style="font-size: 0.85rem; color: #8BAE9B; font-weight: 500; margin-bottom: 0.85rem;">
-                    Adaptive traffic-aware signal control
-                </p>
-                <ul style="font-size: 0.82rem; color: #A4ADB3; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
-                    <li><strong>Traffic-density-based priority:</strong> Senses approaching vehicle density.</li>
-                    <li><strong>Dynamic green-light duration:</strong> Optimizes cycle and split per traffic flow.</li>
-                    <li><strong>Queue-aware allocation:</strong> Allocates green where residual queues are deepest.</li>
-                    <li><strong>Waiting-time consideration:</strong> Escalates priority for vehicles waiting longest.</li>
-                    <li><strong>Fairness mechanism:</strong> Anti-starvation safeguards prevent side-street lockout.</li>
-                </ul>
+        card_ai_html = textwrap.dedent("""
+        <div style="background: #1B2933; border: 1px solid #30404A; border-top: 3px solid #8BAE9B; border-radius: 14px; padding: 1.4rem; box-shadow: 0 4px 15px rgba(0,0,0,0.25); height: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                <span style="font-size: 0.76rem; text-transform: uppercase; color: #8BAE9B; letter-spacing: 0.08em; font-weight: 600;">OPTIMIZED SYSTEM</span>
+                <span class="status-pill" style="border-color: rgba(139,174,155,0.3); color: #8BAE9B;">Intelligent</span>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #F1F0EB; margin: 0 0 0.5rem 0;">AI-OPTIMIZED SYSTEM</h3>
+            <p style="font-size: 0.85rem; color: #8BAE9B; font-weight: 500; margin-bottom: 0.85rem;">
+                Adaptive traffic-aware signal control
+            </p>
+            <ul style="font-size: 0.82rem; color: #A4ADB3; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
+                <li><strong>Traffic-density-based priority:</strong> Senses approaching vehicle density.</li>
+                <li><strong>Dynamic green-light duration:</strong> Optimizes cycle and split per traffic flow.</li>
+                <li><strong>Queue-aware allocation:</strong> Allocates green where residual queues are deepest.</li>
+                <li><strong>Waiting-time consideration:</strong> Escalates priority for vehicles waiting longest.</li>
+                <li><strong>Fairness mechanism:</strong> Anti-starvation safeguards prevent side-street lockout.</li>
+            </ul>
+        </div>
+        """).strip()
+        st.markdown(card_ai_html, unsafe_allow_html=True)
 
     # ==========================================================================
     # MIDDLE SECTION: SIDE-BY-SIDE METRIC COMPARISONS
     # ==========================================================================
     st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.8rem;">
-            <div>
-                <h3 style="font-size: 1.15rem; color: #F1F0EB; margin: 0;">Comprehensive Metric Benchmark</h3>
-                <span style="font-size: 0.8rem; color: #A4ADB3;">Direct side-by-side performance comparison under identical vehicle arrivals.</span>
-            </div>
-            <span class="panel-badge sage">Fair Evaluation Protocol Active</span>
+    bench_header_html = textwrap.dedent("""
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.8rem;">
+        <div>
+            <h3 style="font-size: 1.15rem; color: #F1F0EB; margin: 0;">Comprehensive Metric Benchmark</h3>
+            <span style="font-size: 0.8rem; color: #A4ADB3;">Direct side-by-side performance comparison under identical vehicle arrivals.</span>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        <span class="panel-badge sage">Fair Evaluation Protocol Active</span>
+    </div>
+    """).strip()
+    st.markdown(bench_header_html, unsafe_allow_html=True)
 
     metrics_def = [
         ("avg_wait_time_sec", "1. Avg Vehicle Waiting Time", "sec/veh", True),
@@ -222,7 +215,7 @@ def render_comparison_view():
         delta_str = f"{sign}{pct_change}%"
 
         with card_cols[idx]:
-            metric_card_html = f"""
+            metric_card_html = textwrap.dedent(f"""
             <div style="background: #17232D; border: 1px solid #30404A; border-radius: 12px; padding: 1.1rem; margin-bottom: 0.85rem; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <span style="font-size: 0.78rem; font-weight: 600; color: #F1F0EB;">{label}</span>
@@ -249,7 +242,7 @@ def render_comparison_view():
                     </strong>
                 </div>
             </div>
-            """
+            """).strip()
             st.markdown(metric_card_html, unsafe_allow_html=True)
 
     # ==========================================================================
@@ -294,69 +287,63 @@ def render_comparison_view():
     
     with col_ins_summary:
         winner_color = "#8BAE9B" if "AI" in insights["winner"] else "#E05D5D"
-        st.markdown(
-            f"""
-            <div style="background: #1B2933; border: 1px solid #30404A; border-radius: 12px; padding: 1.25rem; height: 100%;">
-                <span style="font-size: 0.72rem; text-transform: uppercase; color: #A4ADB3; letter-spacing: 0.08em; font-weight: 600;">SUPERIOR CONTROLLER</span>
-                <h4 style="font-size: 1.3rem; color: {winner_color}; margin: 0.35rem 0 0.75rem 0;">{insights["winner"]}</h4>
-                <p style="font-size: 0.85rem; color: #F1F0EB; line-height: 1.5; margin: 0;">
-                    {insights["summary_statement"]}
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        ins_sum_html = textwrap.dedent(f"""
+        <div style="background: #1B2933; border: 1px solid #30404A; border-radius: 12px; padding: 1.25rem; height: 100%;">
+            <span style="font-size: 0.72rem; text-transform: uppercase; color: #A4ADB3; letter-spacing: 0.08em; font-weight: 600;">SUPERIOR CONTROLLER</span>
+            <h4 style="font-size: 1.3rem; color: {winner_color}; margin: 0.35rem 0 0.75rem 0;">{insights["winner"]}</h4>
+            <p style="font-size: 0.85rem; color: #F1F0EB; line-height: 1.5; margin: 0;">
+                {insights["summary_statement"]}
+            </p>
+        </div>
+        """).strip()
+        st.markdown(ins_sum_html, unsafe_allow_html=True)
 
     with col_ins_details:
         improved_tags = "".join([f"<li style='color: #8BAE9B;'>{item}</li>" for item in insights["improved_metrics"]]) or "<li style='color: #A4ADB3;'>None</li>"
         deteriorated_tags = "".join([f"<li style='color: #E05D5D;'>{item}</li>" for item in insights["deteriorated_metrics"]]) or "<li style='color: #A4ADB3;'>None</li>"
         limitations_text = "".join([f"<li>{item}</li>" for item in insights["limitations"]])
 
-        st.markdown(
-            f"""
-            <div style="background: #1B2933; border: 1px solid #30404A; border-radius: 12px; padding: 1.25rem;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.85rem;">
-                    <div>
-                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #8BAE9B; font-weight: 600;">Improved Metrics</span>
-                        <ul style="font-size: 0.8rem; margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height: 1.45;">
-                            {improved_tags}
-                        </ul>
-                    </div>
-                    <div>
-                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #E05D5D; font-weight: 600;">Deteriorated Metrics</span>
-                        <ul style="font-size: 0.8rem; margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height: 1.45;">
-                            {deteriorated_tags}
-                        </ul>
-                    </div>
+        ins_detail_html = textwrap.dedent(f"""
+        <div style="background: #1B2933; border: 1px solid #30404A; border-radius: 12px; padding: 1.25rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.85rem;">
+                <div>
+                    <span style="font-size: 0.72rem; text-transform: uppercase; color: #8BAE9B; font-weight: 600;">Improved Metrics</span>
+                    <ul style="font-size: 0.8rem; margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height: 1.45;">
+                        {improved_tags}
+                    </ul>
                 </div>
-                <div style="border-top: 1px solid #24333D; padding-top: 0.75rem;">
-                    <span style="font-size: 0.72rem; text-transform: uppercase; color: #C6A76A; font-weight: 600;">Observed Behavioral Constraints & Tradeoffs</span>
-                    <ul style="font-size: 0.8rem; color: #A4ADB3; margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height: 1.45;">
-                        {limitations_text}
+                <div>
+                    <span style="font-size: 0.72rem; text-transform: uppercase; color: #E05D5D; font-weight: 600;">Deteriorated Metrics</span>
+                    <ul style="font-size: 0.8rem; margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height: 1.45;">
+                        {deteriorated_tags}
                     </ul>
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <div style="border-top: 1px solid #24333D; padding-top: 0.75rem;">
+                <span style="font-size: 0.72rem; text-transform: uppercase; color: #C6A76A; font-weight: 600;">Observed Behavioral Constraints & Tradeoffs</span>
+                <ul style="font-size: 0.8rem; color: #A4ADB3; margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height: 1.45;">
+                    {limitations_text}
+                </ul>
+            </div>
+        </div>
+        """).strip()
+        st.markdown(ins_detail_html, unsafe_allow_html=True)
 
     # ==========================================================================
     # SECTION 9: EXPORT CAPABILITIES
     # ==========================================================================
     st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div style="background: #17232D; border: 1px solid #30404A; border-radius: 12px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h4 style="font-size: 1rem; color: #F1F0EB; margin: 0 0 0.25rem 0;">Export Controlled Benchmark Data</h4>
-                <p style="font-size: 0.78rem; color: #A4ADB3; margin: 0;">
-                    Download complete benchmark report including scenario parameters, metric deltas, and second-by-second telemetry.
-                </p>
-            </div>
+    export_box_html = textwrap.dedent("""
+    <div style="background: #17232D; border: 1px solid #30404A; border-radius: 12px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h4 style="font-size: 1rem; color: #F1F0EB; margin: 0 0 0.25rem 0;">Export Controlled Benchmark Data</h4>
+            <p style="font-size: 0.78rem; color: #A4ADB3; margin: 0;">
+                Download complete benchmark report including scenario parameters, metric deltas, and second-by-second telemetry.
+            </p>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    </div>
+    """).strip()
+    st.markdown(export_box_html, unsafe_allow_html=True)
 
     # Prepare CSV Export Dataframe
     export_rows = []

@@ -5,6 +5,7 @@ including queue meters, allocated green times, flow rates, and HCM Level of Serv
 """
 
 from typing import Dict, Any
+import textwrap
 import streamlit as st
 import config
 
@@ -71,7 +72,7 @@ def render_approach_cards(
         meter_color = "#4EBA86" if q_count < 8 else ("#E5A93C" if q_count < 16 else "#E05D5D")
 
         with cols[idx]:
-            card_html = f"""
+            card_html = textwrap.dedent(f"""
             <div style="background: #1B2933; border: 1px solid #30404A; border-radius: 12px; padding: 1.1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.25);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
                     <span style="font-size: 0.82rem; font-weight: 600; color: #F1F0EB;">
@@ -101,5 +102,5 @@ def render_approach_cards(
                     <span>Density: <strong style="color: #C6A76A;">{meter_pct}%</strong></span>
                 </div>
             </div>
-            """
+            """).strip()
             st.markdown(card_html, unsafe_allow_html=True)
